@@ -153,7 +153,7 @@ const elements = {
   chips: {
     tags: newMeetingTags,
     attendees: newMeetingAttendees,
-  }
+  },
 };
 
 const ui = {
@@ -186,13 +186,17 @@ const ui = {
 
 const handlers = {
   submit: {
-    newMeeting: handleNewMeeting
+    newMeeting: handleNewMeeting,
+  },
+  click: {
+    backdrop: handleClickOut,
   },
 };
 
 document.head.append(elements.style);
 document.body.append(elements.buttons.newMeeting, elements.dialogs.newMeeting);
 
+window.onclick = handlers.click.backdrop;
 elements.buttons.newMeeting.onclick = ui.show.newMeetingForm;
 elements.forms.newMeeting.onsubmit = handlers.submit.newMeeting;
 
@@ -226,7 +230,7 @@ function handleNewMeeting(e) {
     const { name } = btn.dataset;
     
     ui.chips[name].clear();
-    
+
   } else if (btn.value === 'add-chip') {
     e.skip();
 
@@ -242,6 +246,21 @@ function handleNewMeeting(e) {
     
     showNewMeetingForm();
   }
+}
+
+function handleClickOut(e) {
+  if (e.target.localName !== 'dialog') return;
+
+  const dialog = e.target;
+  const x = e.clientX;
+  const y = e.clientY;
+  const rect = dialog.getBoundingClientRect();
+  
+  if (!isInside({x, y}, rect)) dialog.close();
+}
+
+function isInside({x, y}, {top, right, bottom, left}) {
+  return x >= left && x <= right && y >= top && y <= bottom;
 }
 
 function addChip(name, value) {
