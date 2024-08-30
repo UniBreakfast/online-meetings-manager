@@ -103,12 +103,12 @@ const newMeetingDialog = create('dialog', {
       <div>
         <label>
           <span>Start time:</span>
-          <input type="time" name="time">
+          <input type="time" name="start">
         </label>
   
         <label>
           <span>End time:</span>
-          <input type="time" name="time">
+          <input type="time" name="end">
         </label>
       </div>
 
@@ -126,7 +126,7 @@ const newMeetingDialog = create('dialog', {
       </label>
 
       <div class="buttons">
-        <button value="create-meeting">Create</button>
+        <button value="create">Create</button>
         <button value="clear">Clear</button>
         <button value="cancel">Cancel</button>
       </div>
@@ -139,6 +139,10 @@ const tagsDatalist = newMeetingForm.qrOne('#tags');
 const attendeesDatalist = newMeetingForm.qrOne('#attendees');
 const locationsDatalist = newMeetingForm.qrOne('#locations');
 const [newMeetingTags, newMeetingAttendees] = newMeetingForm.qrAll('.chips');
+
+const data = {
+  meetings: [],
+};
 
 const elements = {
   style,
@@ -165,11 +169,13 @@ const ui = {
       add: v => addChip('tags', v),
       remove: v => removeChip('tags', v),
       clear: v => clearChips('tags'),
+      getValues: v => getChipValues('tags'),
     },
     attendees: {
       add: v => addChip('attendees', v),
       remove: v => removeChip('attendees', v),
       clear: v => clearChips('attendees'),
+      getValues: v => getChipValues('attendees'),
     },
   },
   datalists: {
@@ -181,6 +187,9 @@ const ui = {
       hide: v => toggleChipOption('attendees', v, false),
       show: v => toggleChipOption('attendees', v, true),
     },
+  },
+  getFormData: {
+    newMeeting: getNewMeetingData,
   },
 };
 
@@ -245,6 +254,10 @@ function handleNewMeeting(e) {
     e.skip();
     
     showNewMeetingForm();
+  } else if (btn.value === 'create') {
+    const meeting = ui.getFormData.newMeeting();
+    
+    data.meetings.push(meeting);
   }
 }
 
@@ -257,6 +270,17 @@ function handleClickOut(e) {
   const rect = dialog.getBoundingClientRect();
   
   if (!isInside({x, y}, rect)) dialog.close();
+}
+
+function getNewMeetingData() {
+  const form = elements.forms.newMeeting;
+  const data = Object.fromEntries(new FormData(form));
+  const tags = ui.chips.tags.getValues();
+  const attendees = ui.chips.attendees.getValues();
+
+  Object.assign(data, { tags, attendees });
+
+  return data;
 }
 
 function isInside({x, y}, {top, right, bottom, left}) {
@@ -293,4 +317,10 @@ function toggleChipOption(name, value, on) {
   const option = elements.datalists[name].qrOne(selector);
 
   if (option) assign(option, { disabled: !on, hidden: !on });
+}
+
+function getChipValues(name) {
+  const chips = elements.chips[name].qrAll('button');
+
+  return [...chips].map(b => b.dataset.value);
 }
